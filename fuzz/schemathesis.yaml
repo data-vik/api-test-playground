@@ -1,0 +1,11 @@
+schema:
+  url: http://api:8000/openapi.json
+checks:
+  - not_a_server_error
+  - status_code_conformance
+  - content_type_conformance
+  - response_schema_conformance
+  - response_headers_conformance
+  - required_headers
+  - security
+  - negative_data
