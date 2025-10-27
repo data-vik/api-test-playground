@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=local
+      - DATABASE_URL=sqlite:///./app.db
+      - SEED=true
+    volumes:
+      - ./:/app
+  tests:
+    build: .
+    command: bash -lc "pytest -q"
+    depends_on:
+      - api
+    environment:
+      - DATABASE_URL=sqlite:///./test.db
+  newman:
+    image: postman/newman:alpine
+    volumes:
+      - ./postman:/etc/newman
+    entrypoint: ["newman", "run", "/etc/newman/API Test Playground.postman_collection.json", "--env-var", "baseUrl=http://api:8000"]
+    depends_on:
+      - api
+  fuzz:
+    build: .
+    command: bash -lc "schemathesis run --checks=all http://api:8000/openapi.json"
+    depends_on:
+      - api
+  locust:
+    image: locustio/locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./perf:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --host http://api:8000
+    depends_on:
+      - api
